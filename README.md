@@ -46,6 +46,31 @@ If you want to host a server, take a look at [command line instructions](https:/
 - press Play button
 
 
+## WebGL + Vapour mobile release
+
+This repo includes CI workflows to make a mobile-ready WebGL build and release it through Vapour.
+
+- `.github/workflows/webgl-build.yml` builds WebGL on push/PR.
+- `.github/workflows/vapour-mobile-release.yml` runs a Vapour dry-run and can publish live.
+
+Required repository secrets:
+
+- `UNITY_LICENSE` (for headless Unity builds)
+- `VAPOUR_TOKEN` (only needed when `publish_live=true`)
+- `VAPOUR_API` (optional override of Vapour API URL)
+
+Vapour manifest and mobile controller config live in:
+
+- `deploy/vapour/vapour.toml`
+
+Local CLI test after a Unity WebGL export:
+
+```sh
+vapour controller check --dir deploy/vapour
+vapour publish --dir deploy/vapour --version 0.1.0-mobile --skip-store --dry-run
+```
+
+
 ## In-game controls
 
 Press Escape while in game to open pause menu. You'll see there a lot of utilities, and among them, there is a window which shows all controls.
@@ -90,4 +115,3 @@ Issues that are in focus right now are those with [high priority](https://github
 ###
 
 [![](http://img.youtube.com/vi/NPCiUZ-MZGM/0.jpg)](https://www.youtube.com/watch?v=NPCiUZ-MZGM)
-

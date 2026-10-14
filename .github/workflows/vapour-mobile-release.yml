@@ -1,0 +1,65 @@
+name: Vapour mobile release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: 0.1.1-mobile)"
+        required: true
+        default: "0.1.0-mobile"
+      publish_live:
+        description: "Publish live to Vapour (false = dry-run only)"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          SAU_WEBGL_BUILD_PATH: build/WebGL
+        with:
+          targetPlatform: WebGL
+          unityVersion: 2020.3.26f1
+          buildMethod: SanAndreasUnity.Editor.WebGLBuilder.BuildForCI
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Install vapour-cli
+        run: go install github.com/vapour-computer/vapour-cli@latest
+
+      - name: Validate mobile controller config
+        run: |
+          "$HOME/go/bin/vapour" controller check --dir deploy/vapour
+
+      - name: Dry-run publish (always)
+        run: |
+          "$HOME/go/bin/vapour" publish --dir deploy/vapour --version "${{ inputs.version }}" --skip-store --dry-run
+
+      - name: Publish live
+        if: ${{ inputs.publish_live }}
+        env:
+          VAPOUR_TOKEN: ${{ secrets.VAPOUR_TOKEN }}
+          VAPOUR_API: ${{ secrets.VAPOUR_API }}
+        run: |
+          "$HOME/go/bin/vapour" publish --dir deploy/vapour --version "${{ inputs.version }}" --skip-store

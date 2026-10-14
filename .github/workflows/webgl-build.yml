@@ -1,0 +1,46 @@
+name: WebGL build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+jobs:
+  build-webgl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          SAU_WEBGL_BUILD_PATH: build/WebGL
+        with:
+          targetPlatform: WebGL
+          unityVersion: 2020.3.26f1
+          buildMethod: SanAndreasUnity.Editor.WebGLBuilder.BuildForCI
+
+      - name: Validate output
+        run: |
+          test -f build/WebGL/index.html
+          ls build/WebGL/Build/*.wasm >/dev/null 2>&1 || ls build/WebGL/*.wasm >/dev/null 2>&1
+
+      - name: Upload WebGL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: san-andreas-unity-webgl
+          path: build/WebGL
