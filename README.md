@@ -50,6 +50,14 @@ If you want to host a server, take a look at [command line instructions](https:/
 
 This repo includes CI workflows to make a mobile-ready WebGL build and release it through Vapour.
 
+- **What was added (permanent fix):**
+  - `Assets/Scripts/Editor/WebGLBuilder.cs` adds a headless WebGL build entrypoint used by CI:
+    - `SanAndreasUnity.Editor.WebGLBuilder.BuildForCI`
+    - reads `SAU_WEBGL_BUILD_PATH` (default `build/WebGL`)
+  - `.github/workflows/webgl-build.yml` builds WebGL on push/PR and uploads artifact.
+  - `.github/workflows/vapour-mobile-release.yml` builds WebGL, validates Vapour config, runs dry-run publish, and can publish live.
+  - `deploy/vapour/vapour.toml` stores Vapour project/mobile controller settings for release.
+
 - `.github/workflows/webgl-build.yml` builds WebGL on push/PR.
 - `.github/workflows/vapour-mobile-release.yml` runs a Vapour dry-run and can publish live.
 
@@ -69,6 +77,13 @@ Local CLI test after a Unity WebGL export:
 vapour controller check --dir deploy/vapour
 vapour publish --dir deploy/vapour --version 0.1.0-mobile --skip-store --dry-run
 ```
+
+GitHub release flow:
+
+1. Run **WebGL build** workflow to verify Unity build output.
+2. Run **Vapour mobile release** with:
+   - `publish_live=false` first (dry-run only)
+   - then `publish_live=true` to publish the same pipeline live.
 
 
 ## In-game controls
